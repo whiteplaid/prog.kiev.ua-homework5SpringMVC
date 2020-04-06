@@ -17,6 +17,9 @@
          <form action="/all_photos" method="post">
              <input type="submit" value="All Photos"/>
          </form>
+         <form action="/zip" method="post">
+             <input type="submit" value="Zip All Photos"/>
+         </form>
       </div>
   </body>
 </html>

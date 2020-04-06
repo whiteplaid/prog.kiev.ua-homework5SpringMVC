@@ -9,9 +9,14 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Controller
 @RequestMapping("/")
@@ -23,6 +28,7 @@ public class MyController {
     public String onIndex() {
         return "index";
     }
+
     @RequestMapping(value = "/all_photos", method = RequestMethod.POST)
     public String allPhotos (Model model) {
         Set<Long> keys = photos.keySet();
@@ -34,6 +40,36 @@ public class MyController {
         if (checked != null)
             for (Long id:checked) photos.remove(id);
         return "all_photos";
+    }
+    @RequestMapping(value = "/zip")
+    public String zipFile (HttpServletResponse response) throws IOException {
+        Set<Long> photo = photos.keySet();
+        List<String> fileNames = new ArrayList<>();
+        File f= new File("c:\\Photos\\photos.zip");
+        Path path = Paths.get(f.getPath());
+        for (Long id:photo) fileNames.add(id + ".png");
+            ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(f));
+            for (String fileName:fileNames) {
+                File file = new File("c:\\Photos\\" + fileName);
+                String[] id = fileName.split(".png");
+                String idResult = "";
+                for (String name: id) idResult+=name;
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(photos.get(Long.parseLong(idResult)));
+                fos.flush();
+                fos.close();
+                ZipEntry ze = new ZipEntry(file.getName());
+                zip.putNextEntry(ze);
+                zip.write(photos.get(Long.parseLong(idResult)));
+                zip.closeEntry();
+            }
+            zip.close();
+            response.setContentType("application/zip");
+            response.addHeader("Content-Disposition", "attachment; filename=photos.zip");
+            Files.copy(path,response.getOutputStream());
+            response.getOutputStream().flush();
+
+        return "index";
     }
     @RequestMapping(value = "/add_photo", method = RequestMethod.POST)
     public String onAddPhoto(Model model, @RequestParam MultipartFile photo) {
